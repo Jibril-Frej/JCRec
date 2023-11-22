@@ -176,8 +176,9 @@ def get_all_learners(
     Returns:
         list: a list of random learners
     """
-    return [
-        get_random_learner(
+    return {
+        "id_l"
+        + str(i): get_random_learner(
             skills,
             mastery_levels,
             years,
@@ -187,8 +188,8 @@ def get_all_learners(
             min_n_skills,
             max_n_skills,
         )
-        for _ in range(n_learners)
-    ]
+        for i in range(n_learners)
+    }
 
 
 def get_random_job(
@@ -263,8 +264,9 @@ def get_all_jobs(
         dict: a dictionary containing the (skills,mastery levels) and the year of the job
     """
 
-    return [
-        get_random_job(
+    return {
+        "id_j"
+        + str(i): get_random_job(
             skills,
             mastery_levels,
             years,
@@ -274,8 +276,8 @@ def get_all_jobs(
             min_n_skills,
             max_n_skills,
         )
-        for _ in range(n_jobs)
-    ]
+        for i in range(n_jobs)
+    }
 
 
 def get_random_provided_skills(
@@ -285,7 +287,7 @@ def get_random_provided_skills(
 
     Args:
         skills (list): list of skills
-        mastery_levels (list): list of mastery levels
+        mastery_levels (list): list of mastery levels in ascending order
         required_skills (dict): dictionary of required skills
         n_provided_skills (int): number of provided skills
 
@@ -294,18 +296,23 @@ def get_random_provided_skills(
     """
     provided_skills = dict()
     while len(provided_skills) < n_provided_skills:
-        candidate_skill = random.choice(skills)
-        candidate_level = random.choice(mastery_levels)
+        p = random.random()
+        if p < 0.5 and required_skills:
+            candidate_skill = random.choice(list(required_skills.keys()))
+        else:
+            candidate_skill = random.choice(skills)
         if (
             candidate_skill not in required_skills
             and candidate_skill not in provided_skills
         ):
-            provided_skills[candidate_skill] = candidate_level
+            provided_skills[candidate_skill] = mastery_levels[0]
         elif (
             candidate_skill in required_skills
-            and candidate_level > required_skills[candidate_skill]
+            and required_skills[candidate_skill] < mastery_levels[-1]
         ):
-            provided_skills[candidate_skill] = candidate_level
+            level_index = mastery_levels.index(required_skills[candidate_skill])
+            level = mastery_levels[level_index + 1]
+            provided_skills[candidate_skill] = level
 
     return provided_skills
 
@@ -371,8 +378,9 @@ def get_all_courses(
     Returns:
         _type_: _description_
     """
-    return [
-        get_random_course(
+    return {
+        "id_c"
+        + str(i): get_random_course(
             skills,
             mastery_levels,
             min_n_required_skills,
@@ -380,8 +388,8 @@ def get_all_courses(
             min_n_provided_skills,
             max_n_provided_skills,
         )
-        for _ in range(n_courses)
-    ]
+        for i in range(n_courses)
+    }
 
 
 def get_job_market(

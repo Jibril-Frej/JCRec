@@ -76,6 +76,7 @@ def learner_job_matching(learner, job):
 
 def learner_course_required_matching(learner, course):
     """Computes the matching between a learner and a course based on the required skills.
+    If the course has no required skills, the matching is 1.
 
     Args:
         learner (dict): Learner's profile including possessed skills and levels.
