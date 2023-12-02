@@ -63,11 +63,12 @@ def get_mastery_levels_proba(mastery_levels):
     return mastery_levels_normalized_probabilities
 
 
-def get_skills(taxonomy):
+def get_skills(taxonomy, nb_skills):
     """Returns a list of skills and a probability distribution over the skills.
 
     Args:
         taxonomy (dataframe): the taxonomy
+        nb_skills (int): number of skills (if -1, then all the skills are returned)
 
     Returns:
         list, array: a list of skills and a probability distribution over the skills
@@ -79,7 +80,7 @@ def get_skills(taxonomy):
         for key, value in levels_dict.items()
     }
 
-    skills = list(levels_dict.keys())
+    skills = list(levels_dict.keys())[:nb_skills]
     random.shuffle(skills)
     nb_skills = len(skills)
     skills_probabilities = [1 / np.log(i + 1) for i in range(1, nb_skills + 1)]
@@ -177,8 +178,7 @@ def get_all_learners(
         list: a list of random learners
     """
     return {
-        "id_l"
-        + str(i): get_random_learner(
+        i: get_random_learner(
             skills,
             mastery_levels,
             years,
@@ -265,8 +265,7 @@ def get_all_jobs(
     """
 
     return {
-        "id_j"
-        + str(i): get_random_job(
+        i: get_random_job(
             skills,
             mastery_levels,
             years,
@@ -379,8 +378,7 @@ def get_all_courses(
         _type_: _description_
     """
     return {
-        "id_c"
-        + str(i): get_random_course(
+        i: get_random_course(
             skills,
             mastery_levels,
             min_n_required_skills,
@@ -394,6 +392,7 @@ def get_all_courses(
 
 def get_job_market(
     taxonomy_path="../data/taxonomy/taxonomy_V4.csv",
+    nb_skills=-1,
     mastery_levels=[1, 2, 3, 4],
     years=[i for i in range(2023, 2017, -1)],
     learner_min_n_skills=5,
@@ -420,7 +419,7 @@ def get_job_market(
     """
     taxonomy = read_taxonomy(taxonomy_path)
     mastery_levels_normalized_probabilities = get_mastery_levels_proba(mastery_levels)
-    skills, skills_normalized_probabilities = get_skills(taxonomy)
+    skills, skills_normalized_probabilities = get_skills(taxonomy, nb_skills)
     years_normalized_probabilities = get_years_proba(years)
     learners = get_all_learners(
         skills,

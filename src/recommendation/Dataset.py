@@ -49,7 +49,7 @@ class Dataset:
         ) = data
 
     def get_jobs_inverted_index(self):
-        self.jobs_inverted_index = Counter()
+        self.jobs_inverted_index = dict()
         for id_j, job in self.jobs.items():
             for skill in job["required_skills"]:
                 if skill not in self.jobs_inverted_index:
@@ -125,7 +125,8 @@ class Dataset:
         nb_applicable_jobs = 0
         jobs_subset = set()
         for skill in learner["possessed_skills"]:
-            jobs_subset.update(self.jobs_inverted_index[skill])
+            if skill in self.jobs_inverted_index:
+                jobs_subset.update(self.jobs_inverted_index[skill])
         for job_id in jobs_subset:
             matching = matchings.learner_job_matching(learner, self.jobs[job_id])
             if matching >= threshold:
@@ -142,8 +143,13 @@ class Dataset:
     def get_all_enrollable_courses(self, learner, threshold):
         enrollable_courses = {}
         for id_c, course in self.courses.items():
-            matching = matchings.learner_course_required_matching(learner, course)
-            if matching >= threshold:
+            required_matching = matchings.learner_course_required_matching(
+                learner, course
+            )
+            provided_matching = matchings.learner_course_provided_matching(
+                learner, course
+            )
+            if required_matching >= threshold and provided_matching < 1.0:
                 enrollable_courses[id_c] = course
         return enrollable_courses
 

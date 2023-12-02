@@ -1,15 +1,23 @@
+import os
+import json
+
 from copy import deepcopy
 
 from Dataset import Dataset
-
-
-# import recommendations
 
 
 class Greedy:
     def __init__(self, dataset, threshold):
         self.dataset = dataset
         self.threshold = threshold
+
+    def update_learner_profile(self, learner, course):
+        for skill, level in course["provided_skills"].items():
+            if (
+                skill not in learner["possessed_skills"]
+                or learner["possessed_skills"][skill] < level
+            ):
+                learner["possessed_skills"][skill] = level
 
     def get_course_recommendation(self, learner, enrollable_courses):
         course_recommendation = None
@@ -18,12 +26,7 @@ class Greedy:
 
         for id_c, course in enrollable_courses.items():
             tmp_learner = deepcopy(learner)
-            for skill, level in course["provided_skills"].items():
-                if (
-                    skill not in tmp_learner["possessed_skills"]
-                    or tmp_learner["possessed_skills"][skill] < level
-                ):
-                    tmp_learner["possessed_skills"][skill] = level
+            self.update_learner_profile(tmp_learner, course)
 
             nb_applicable_jobs = self.dataset.get_nb_applicable_jobs(
                 tmp_learner, self.threshold
@@ -47,45 +50,62 @@ class Greedy:
 
         return course_recommendation
 
+    def recommend_and_update(self, learner):
+        enrollable_courses = self.dataset.get_all_enrollable_courses(
+            learner, self.threshold
+        )
+        course_recommendation = self.get_course_recommendation(
+            learner, enrollable_courses
+        )
+
+        self.update_learner_profile(
+            learner, self.dataset.courses[course_recommendation]
+        )
+        return course_recommendation
+
     def greedy_recommendation(self, k):
+        results = dict()
+
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The average attractiveness of the learners is {avg_l_attrac:.2f}")
+
+        results["original_attractiveness"] = avg_l_attrac
 
         avg_app_j = self.dataset.get_avg_applicable_jobs(self.threshold)
         print(f"The average nb of applicable jobs per learner is {avg_app_j:.2f}")
 
-        no_enrollable_courses = 0
-        avg_nb_enrollable_courses = 0
+        results["original_applicable_jobs"] = avg_app_j
+
+        recommendations = dict()
 
         for id_l in self.dataset.learners:
+            recommendations[id_l] = []
             for i in range(k):
-                enrollable_courses = self.dataset.get_all_enrollable_courses(
-                    self.dataset.learners[id_l], self.threshold
+                recommendations[id_l].append(
+                    self.recommend_and_update(self.dataset.learners[id_l])
                 )
-
-                if enrollable_courses is None:
-                    no_enrollable_courses += 1
-
-                avg_nb_enrollable_courses += len(enrollable_courses)
-
-                course_recommendation = self.get_course_recommendation(
-                    self.dataset.learners[id_l], enrollable_courses
-                )
-
-                for skill, level in self.dataset.courses[course_recommendation][
-                    "provided_skills"
-                ].items():
-                    if (
-                        skill not in self.dataset.learners[id_l]["possessed_skills"]
-                        or self.dataset.learners[id_l]["possessed_skills"][skill]
-                        < level
-                    ):
-                        self.dataset.learners[id_l]["possessed_skills"][skill] = level
 
         new_learners_attractiveness = self.dataset.get_all_learners_attractiveness()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
 
+        results["new_attractiveness"] = avg_l_attrac
+
         avg_app_j = self.dataset.get_avg_applicable_jobs(self.threshold)
         print(f"The new average nb of applicable jobs per learner is {avg_app_j:.2f}")
+
+        results["new_applicable_jobs"] = avg_app_j
+
+        results["recommendations"] = recommendations
+
+        json.dump(
+            results,
+            open(
+                os.path.join(
+                    self.dataset.dataset_path, "results", "greedy_" + str(k) + ".json"
+                ),
+                "w",
+            ),
+            indent=4,
+        )

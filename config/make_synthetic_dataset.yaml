@@ -3,6 +3,7 @@ dataset_path: data/synthetic/
 seed: 4
 
 taxonomy_path: data/taxonomy/taxonomy_V4.csv
+nb_skills: 20
 mastery_levels: [1, 2, 3, 4]
 years: [2023, 2022, 2021, 2020, 2019, 2018, 2017]
 learner_min_n_skills: 5
@@ -10,9 +11,9 @@ learner_max_n_skills: 10
 n_learners: 50
 job_min_n_skills: 2
 job_max_n_skills: 5
-job_n_jobs: 1000
+job_n_jobs: 100
 course_min_n_required_skills: 0
 course_max_n_required_skills: 5
 course_min_n_provided_skills: 1
 course_max_n_provided_skills: 2
-n_courses: 1000
+n_courses: 100
