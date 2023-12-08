@@ -82,7 +82,6 @@ def get_skills(taxonomy, nb_skills):
 
     skills = list(levels_dict.keys())[:nb_skills]
     random.shuffle(skills)
-    nb_skills = len(skills)
     skills_probabilities = [1 / np.log(i + 1) for i in range(1, nb_skills + 1)]
     skills_normalized_probabilities = np.array(skills_probabilities) / sum(
         skills_probabilities
@@ -474,8 +473,16 @@ def main():
 
     skills, learners, jobs, courses = get_job_market(**config)
 
+    skills = {skill: str(i) for i, skill in enumerate(skills)}
+
+    two_way_skills = dict()
+
+    for skill, skill_id in skills.items():
+        two_way_skills[skill_id] = skill
+        two_way_skills[skill] = skill_id
+
     data_to_save = {
-        "skills.json": skills,
+        "skills.json": two_way_skills,
         "mastery_levels.json": config["mastery_levels"],
         "years.json": config["years"],
         "learners.json": learners,

@@ -32,6 +32,10 @@ def main():
         optimal_recommender = Optimal(dataset, threshold)
         optimal_recommender.optimal_recommendation(k)
 
+    if model == "reinforce":
+        reinforce_recommender = Reinforce(dataset, threshold)
+        reinforce_recommender.reinforce_recommendation(k)
+
 
 if __name__ == "__main__":
     main()
