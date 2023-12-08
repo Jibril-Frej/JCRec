@@ -1,17 +1,14 @@
 import json
 import os
 
-
-import yaml
-import pandas as pd
-from collections import Counter
-
 import matchings
 
+from collections import Counter
 
-class Dataset:
-    def __init__(self, config):
-        self.config = config
+
+class SyntheticDataset:
+    def __init__(self, dataset_path):
+        self.dataset_path = dataset_path
         self.skills = None
         self.mastery_levels = None
         self.years = None
@@ -24,28 +21,32 @@ class Dataset:
         self.skills_attractiveness = None
         self.learners_attractiveness = None
         self.load_data()
-        # self.get_jobs_inverted_index()
-        # self.get_all_market_metrics()
+        self.get_jobs_inverted_index()
+        self.get_all_market_metrics()
 
     def load_data(self):
-        with open(self.config, "r") as f:
-            self.config = yaml.load(f, Loader=yaml.FullLoader)
+        filenames = [
+            "skills.json",
+            "mastery_levels.json",
+            "years.json",
+            "learners.json",
+            "jobs.json",
+            "courses.json",
+        ]
 
-        self.skills = pd.read_csv(self.config["taxonomy_path"]).unique_id.to_list()
+        data = [
+            json.load(open(os.path.join(self.dataset_path, fname)))
+            for fname in filenames
+        ]
 
-        # data = [
-        #     json.load(open(os.path.join(self.dataset_path, fname)))
-        #     for fname in filenames
-        # ]
-
-        # (
-        #     self.skills,
-        #     self.mastery_levels,
-        #     self.years,
-        #     self.learners,
-        #     self.jobs,
-        #     self.courses,
-        # ) = data
+        (
+            self.skills,
+            self.mastery_levels,
+            self.years,
+            self.learners,
+            self.jobs,
+            self.courses,
+        ) = data
 
     def get_jobs_inverted_index(self):
         self.jobs_inverted_index = dict()

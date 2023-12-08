@@ -1,6 +1,6 @@
 import argparse
 
-from Dataset import Dataset
+from SyntheticDataset import SyntheticDataset
 from Greedy import Greedy
 from Optimal import Optimal
 
@@ -22,7 +22,7 @@ def main():
     model = args.model
     k = args.k
 
-    dataset = Dataset(dataset_path)
+    dataset = SyntheticDataset(dataset_path)
 
     if model == "greedy":
         greedy_recommender = Greedy(dataset, threshold)
