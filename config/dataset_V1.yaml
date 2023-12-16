@@ -4,7 +4,7 @@ cv_path: data/V1/kaggle_cvs.json
 job_path: data/V1/tech_jobs_english.json
 mastery_levels_path: data/V1/mastery_levels.json
 results_path: data/V1/results
-nb_courses: 100
+nb_courses: 10
 nb_cvs: 50
-nb_jobs: 100
+nb_jobs: 10
 seed: 42

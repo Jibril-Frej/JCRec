@@ -46,17 +46,25 @@ class Dataset:
         self.rng = random.Random(self.config["seed"])
         self.skills = pd.read_csv(self.config["taxonomy_path"])
 
-        # get all the unique values in column Type Level 3
-        level2int = {
-            level: i for i, level in enumerate(self.skills["Type Level 3"].unique())
-        }
+        if self.config["level_3"]:
+            # get all the unique values in column Type Level 3
+            level2int = {
+                level: i for i, level in enumerate(self.skills["Type Level 3"].unique())
+            }
 
-        # make a dict from column unique_id to column Type Level 3
-        skills_dict = dict(zip(self.skills["unique_id"], self.skills["Type Level 3"]))
+            # make a dict from column unique_id to column Type Level 3
+            skills_dict = dict(
+                zip(self.skills["unique_id"], self.skills["Type Level 3"])
+            )
 
-        # map skills_dict values to level2int
-        self.skills2int = {key: level2int[value] for key, value in skills_dict.items()}
-        self.skills = set(self.skills2int.values())
+            # map skills_dict values to level2int
+            self.skills2int = {
+                key: level2int[value] for key, value in skills_dict.items()
+            }
+            self.skills = set(self.skills2int.values())
+        else:
+            self.skills = set(self.skills["unique_id"])
+            self.skills2int = {skill: i for i, skill in enumerate(self.skills)}
 
         self.mastery_levels = json.load(open(self.config["mastery_levels_path"]))
         self.load_learners()
@@ -279,7 +287,8 @@ class Dataset:
     def get_learner_attractiveness(self, learner):
         attractiveness = 0
         for skill, level in learner:
-            attractiveness += len(self.jobs_inverted_index[skill])
+            if skill in self.jobs_inverted_index:
+                attractiveness += len(self.jobs_inverted_index[skill])
         return attractiveness
 
     def get_avg_learner_attractiveness(self):

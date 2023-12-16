@@ -71,7 +71,7 @@ class Greedy:
         )
         return course_recommendation
 
-    def greedy_recommendation(self, k):
+    def greedy_recommendation(self, k, run):
         results = dict()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
@@ -88,11 +88,15 @@ class Greedy:
 
         for i, learner in enumerate(tqdm(self.dataset.learners)):
             index = self.dataset.learners_index[i]
-            recommendations[index] = []
+            recommendation_sequence = []
             for _ in range(k):
-                recommendations[index].append(
+                recommendation_sequence.append(
                     self.recommend_and_update(self.dataset.learners[i])
                 )
+            recommendations[index] = [
+                self.dataset.courses_index[course_id]
+                for course_id in recommendation_sequence
+            ]
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
@@ -106,12 +110,14 @@ class Greedy:
 
         results["recommendations"] = recommendations
 
+        filename = "greedy_k_" + str(k) + "_run_" + str(run) + ".json"
+
         json.dump(
             results,
             open(
                 os.path.join(
                     self.dataset.config["results_path"],
-                    "greedy_" + str(k) + ".json",
+                    filename,
                 ),
                 "w",
             ),

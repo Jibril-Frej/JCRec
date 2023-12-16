@@ -10,17 +10,37 @@ from CourseRecEnv import CourseRecEnv, EvaluateCallback
 
 
 class Reinforce:
-    def __init__(self, dataset, model, k, threshold, total_steps=1000, eval_freq=100):
+    def __init__(
+        self, dataset, model, k, threshold, run, total_steps=1000, eval_freq=100
+    ):
         self.dataset = dataset
         self.model_name = model
         self.k = k
         self.threshold = threshold
+        self.run = run
         self.total_steps = total_steps
         self.eval_freq = eval_freq
         self.train_env = CourseRecEnv(dataset, threshold=self.threshold, k=self.k)
         self.eval_env = CourseRecEnv(dataset, threshold=self.threshold, k=self.k)
         self.get_model()
-        self.eval_callback = EvaluateCallback(self.eval_env, eval_freq=self.eval_freq)
+        self.all_results_filename = (
+            "all_" + self.model_name + "_k_" + str(self.k) + "_run_" + str(run) + ".txt"
+        )
+        self.final_results_filename = (
+            "final_"
+            + self.model_name
+            + "_k_"
+            + str(self.k)
+            + "_run_"
+            + str(self.run)
+            + ".json"
+        )
+
+        self.eval_callback = EvaluateCallback(
+            self.eval_env,
+            eval_freq=self.eval_freq,
+            all_results_filename=self.all_results_filename,
+        )
 
     def get_model(self):
         if self.model_name == "dqn":
@@ -64,15 +84,22 @@ class Reinforce:
         for i, learner in enumerate(tqdm(self.dataset.learners)):
             self.eval_env.reset(learner=learner)
             done = False
-            recommendations[i] = []
+            index = self.dataset.learners_index[i]
+            recommendation_sequence = []
             while not done:
                 obs = self.eval_env._get_obs()
                 action, _state = self.model.predict(obs, deterministic=True)
                 obs, reward, done, _, info = self.eval_env.step(action)
                 if reward != -1:
-                    recommendations[i].append(action.item())
-            for course in recommendations[i]:
+                    recommendation_sequence.append(action.item())
+            for course in recommendation_sequence:
                 self.update_learner_profile(learner, self.dataset.courses[course])
+
+            recommendations[index] = [
+                self.dataset.courses_index[course_id]
+                for course_id in recommendation_sequence
+            ]
+
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
 
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
@@ -91,7 +118,7 @@ class Reinforce:
             open(
                 os.path.join(
                     self.dataset.config["results_path"],
-                    self.model_name + "_" + str(self.k) + ".json",
+                    self.final_results_filename,
                 ),
                 "w",
             ),

@@ -177,3 +177,6 @@ check_*
 ids.txt
 data/synthetic/
 data/V1/
+data/V2/
+docker_results/
+runai-job.yaml

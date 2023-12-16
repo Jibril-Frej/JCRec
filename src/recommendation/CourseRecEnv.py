@@ -1,3 +1,4 @@
+import os
 import random
 
 import numpy as np
@@ -107,10 +108,12 @@ class CourseRecEnv(gym.Env):
 
 
 class EvaluateCallback(BaseCallback):
-    def __init__(self, eval_env, eval_freq, verbose=1):
+    def __init__(self, eval_env, eval_freq, all_results_filename, verbose=1):
         super(EvaluateCallback, self).__init__(verbose)
         self.eval_env = eval_env
         self.eval_freq = eval_freq
+        self.all_results_filename = all_results_filename
+        self.mode = "w"
 
     def _on_step(self):
         if self.n_calls % self.eval_freq == 0:
@@ -127,4 +130,19 @@ class EvaluateCallback(BaseCallback):
                         tmp_avg_jobs = reward
                 avg_jobs += tmp_avg_jobs
             print(self.n_calls, avg_jobs / len(self.eval_env.dataset.learners))
+            with open(
+                os.path.join(
+                    self.eval_env.dataset.config["results_path"],
+                    self.all_results_filename,
+                ),
+                self.mode,
+            ) as f:
+                f.write(
+                    str(self.n_calls)
+                    + " "
+                    + str(avg_jobs / len(self.eval_env.dataset.learners))
+                    + "\n"
+                )
+            if self.mode == "w":
+                self.mode = "a"
         return True  # Return True to continue training

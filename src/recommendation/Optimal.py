@@ -116,7 +116,7 @@ class Optimal:
         self.update_learner_profile_list(learner, course_recommendations_list)
         return course_recommendations_list
 
-    def optimal_recommendation(self, k):
+    def optimal_recommendation(self, k, run):
         results = dict()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
@@ -132,9 +132,14 @@ class Optimal:
         recommendations = dict()
         for i, learner in enumerate(tqdm(self.dataset.learners)):
             index = self.dataset.learners_index[i]
-            recommendations[index] = self.recommend_and_update(
+            recommendation_sequence = self.recommend_and_update(
                 self.dataset.learners[i], k
             )
+
+            recommendations[index] = [
+                self.dataset.courses_index[course_id]
+                for course_id in recommendation_sequence
+            ]
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
@@ -148,12 +153,14 @@ class Optimal:
 
         results["recommendations"] = recommendations
 
+        filename = "optimal_k_" + str(k) + "_run_" + str(run) + ".json"
+
         json.dump(
             results,
             open(
                 os.path.join(
                     self.dataset.config["results_path"],
-                    "optimal_" + str(k) + ".json",
+                    filename,
                 ),
                 "w",
             ),
