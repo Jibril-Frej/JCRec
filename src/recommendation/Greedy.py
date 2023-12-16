@@ -2,6 +2,7 @@ import os
 import json
 
 from copy import deepcopy
+from tqdm import tqdm
 
 from Dataset import Dataset
 
@@ -12,12 +13,17 @@ class Greedy:
         self.threshold = threshold
 
     def update_learner_profile(self, learner, course):
-        for skill, level in course["provided_skills"].items():
-            if (
-                skill not in learner["possessed_skills"]
-                or learner["possessed_skills"][skill] < level
-            ):
-                learner["possessed_skills"][skill] = level
+        for cskill, clevel in course[1]:
+            found = False
+            i = 0
+            while not found and i < len(learner):
+                lskill, llevel = learner[i]
+                if cskill == lskill:
+                    learner[i] = (lskill, max(llevel, clevel))
+                    found = True
+                i += 1
+            if not found:
+                learner.append((cskill, clevel))
 
     def get_course_recommendation(self, learner, enrollable_courses):
         course_recommendation = None
@@ -54,6 +60,8 @@ class Greedy:
         enrollable_courses = self.dataset.get_all_enrollable_courses(
             learner, self.threshold
         )
+        # print(f"{len(enrollable_courses)} courses are enrollable for this learner")
+        # print(f"{enrollable_courses.keys()}")
         course_recommendation = self.get_course_recommendation(
             learner, enrollable_courses
         )
@@ -78,14 +86,13 @@ class Greedy:
 
         recommendations = dict()
 
-        for id_l in self.dataset.learners:
-            recommendations[id_l] = []
-            for i in range(k):
-                recommendations[id_l].append(
-                    self.recommend_and_update(self.dataset.learners[id_l])
+        for i, learner in enumerate(tqdm(self.dataset.learners)):
+            index = self.dataset.learners_index[i]
+            recommendations[index] = []
+            for _ in range(k):
+                recommendations[index].append(
+                    self.recommend_and_update(self.dataset.learners[i])
                 )
-
-        new_learners_attractiveness = self.dataset.get_all_learners_attractiveness()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
@@ -103,7 +110,8 @@ class Greedy:
             results,
             open(
                 os.path.join(
-                    self.dataset.dataset_path, "results", "greedy_" + str(k) + ".json"
+                    self.dataset.config["results_path"],
+                    "greedy_" + str(k) + ".json",
                 ),
                 "w",
             ),

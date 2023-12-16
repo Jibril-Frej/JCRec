@@ -2,6 +2,7 @@ import os
 import json
 
 from copy import deepcopy
+from tqdm import tqdm
 
 from Dataset import Dataset
 
@@ -12,12 +13,17 @@ class Optimal:
         self.threshold = threshold
 
     def update_learner_profile(self, learner, course):
-        for skill, level in course["provided_skills"].items():
-            if (
-                skill not in learner["possessed_skills"]
-                or learner["possessed_skills"][skill] < level
-            ):
-                learner["possessed_skills"][skill] = level
+        for cskill, clevel in course[1]:
+            found = False
+            i = 0
+            while not found and i < len(learner):
+                lskill, llevel = learner[i]
+                if cskill == lskill:
+                    learner[i] = (lskill, max(llevel, clevel))
+                    found = True
+                i += 1
+            if not found:
+                learner.append((cskill, clevel))
 
     def update_learner_profile_list(self, learner, course_list):
         for id_c in course_list:
@@ -124,12 +130,11 @@ class Optimal:
         results["original_applicable_jobs"] = avg_app_j
 
         recommendations = dict()
-        for id_l in self.dataset.learners:
-            recommendations[id_l] = self.recommend_and_update(
-                self.dataset.learners[id_l], k
+        for i, learner in enumerate(tqdm(self.dataset.learners)):
+            index = self.dataset.learners_index[i]
+            recommendations[index] = self.recommend_and_update(
+                self.dataset.learners[i], k
             )
-
-        new_learners_attractiveness = self.dataset.get_all_learners_attractiveness()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")
@@ -147,7 +152,8 @@ class Optimal:
             results,
             open(
                 os.path.join(
-                    self.dataset.dataset_path, "results", "optimal_" + str(k) + ".json"
+                    self.dataset.config["results_path"],
+                    "optimal_" + str(k) + ".json",
                 ),
                 "w",
             ),

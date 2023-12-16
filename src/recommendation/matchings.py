@@ -60,16 +60,12 @@ def learner_job_matching(learner, job):
     matching = 0
 
     # For each required skill in the job
-    for skill in job["required_skills"]:
-        # Check if the learner possesses the skill
-        if skill in learner["possessed_skills"]:
-            # Calculate similarity ratio based on mastery levels
+    for jskill, jlevel in job:
+        for lskill, llevel in learner:
+            if jskill == lskill:
+                matching += skill_skill_similarity(llevel, jlevel)
 
-            matching += skill_skill_similarity(
-                learner["possessed_skills"][skill], job["required_skills"][skill]
-            )
-
-    matching = matching / len(job["required_skills"])
+    matching /= len(job)
 
     return matching
 
@@ -86,17 +82,16 @@ def learner_course_required_matching(learner, course):
         float: matching value between 0 and 1
     """
 
-    if not course["required_skills"]:
+    if not course[0]:
         return 1.0
 
     required_matching = 0
-    for skill in course["required_skills"]:
-        if skill in learner["possessed_skills"]:
-            sim = skill_skill_similarity(
-                learner["possessed_skills"][skill], course["required_skills"][skill]
-            )
-            required_matching += sim
-    return required_matching / len(course["required_skills"])
+    for cskill, clevel in course[0]:
+        for lskill, llevel in learner:
+            if cskill == lskill:
+                sim = skill_skill_similarity(llevel, clevel)
+                required_matching += sim
+    return required_matching / len(course[0])
 
 
 def learner_course_provided_matching(learner, course):
@@ -110,13 +105,12 @@ def learner_course_provided_matching(learner, course):
         float: matching value between 0 and 1
     """
     provided_matching = 0
-    for skill in course["provided_skills"]:
-        if skill in learner["possessed_skills"]:
-            sim = skill_skill_similarity(
-                learner["possessed_skills"][skill], course["provided_skills"][skill]
-            )
-            provided_matching += sim
-    return provided_matching / len(course["provided_skills"])
+    for cskill, clevel in course[1]:
+        for lskill, llevel in learner:
+            if cskill == lskill:
+                sim = skill_skill_similarity(llevel, clevel)
+                provided_matching += sim
+    return provided_matching / len(course[1])
 
 
 def learner_course_matching(learner, course):

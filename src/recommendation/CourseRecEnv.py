@@ -9,13 +9,16 @@ import matchings
 
 
 class CourseRecEnv(gym.Env):
-    def __init__(self, dataset, min_skills=0, max_skills=10, threshold=0.8, k=3):
+    def __init__(self, dataset, threshold=0.8, k=3):
         self.dataset = dataset
-        self.nb_skills = len(dataset.skills) // 2
-        self.max_level = max(dataset.mastery_levels)
+        self.nb_skills = len(dataset.skills)
+        self.mastery_levels = [
+            elem for elem in list(dataset.mastery_levels.values()) if elem > 0
+        ]
+        self.max_level = max(self.mastery_levels)
         self.nb_courses = len(dataset.courses)
-        self.min_skills = min_skills
-        self.max_skills = max_skills
+        self.min_skills = min([len(learner) for learner in dataset.learners])
+        self.max_skills = max([len(learner) for learner in dataset.learners])
         self.threshold = threshold
         self.k = k
         self.observation_space = gym.spaces.Box(
@@ -28,12 +31,7 @@ class CourseRecEnv(gym.Env):
         return self._agent_skills
 
     def _get_info(self):
-        learner = dict()
-        learner["possessed_skills"] = dict()
-        for skill_id, level in enumerate(self._agent_skills):
-            if level > 0:
-                skill_name = self.dataset.skills[str(skill_id)]
-                learner["possessed_skills"][skill_name] = level
+        learner = self.obs_to_learner()
 
         return {
             "nb_applicable_jobs": self.dataset.get_nb_applicable_jobs(
@@ -42,19 +40,16 @@ class CourseRecEnv(gym.Env):
         }
 
     def obs_to_learner(self):
-        learner = dict()
-        learner["possessed_skills"] = dict()
-        for skill_id, level in enumerate(self._agent_skills):
+        learner = []
+        for skill, level in enumerate(self._agent_skills):
             if level > 0:
-                skill_name = self.dataset.skills[str(skill_id)]
-                learner["possessed_skills"][skill_name] = level
+                learner.append((skill, level))
         return learner
 
     def learner_to_obs(self, learner):
         obs = np.zeros(self.nb_skills, dtype=np.int32)
-        for skill, level in learner["possessed_skills"].items():
-            skill_id = int(self.dataset.skills[skill])
-            obs[skill_id] = level
+        for skill, level in learner:
+            obs[skill] = level
         return obs
 
     def get_random_learner(self):
@@ -63,7 +58,7 @@ class CourseRecEnv(gym.Env):
         initial_skills = np.zeros(self.nb_skills, dtype=np.int32)
         skills = np.random.choice(self.nb_skills, size=n_skills, replace=False)
         levels = np.random.choice(
-            self.dataset.mastery_levels,
+            self.mastery_levels,
             n_skills,
             replace=True,
         )
@@ -82,13 +77,12 @@ class CourseRecEnv(gym.Env):
         self.nb_recommendations = 0
         observation = self._get_obs()
         info = self._get_info()
-        self.current_attractiveness = info["nb_applicable_jobs"]
         return observation, info
 
     def step(self, action):
         # Update the agent's skills with the course provided_skills
 
-        course = self.dataset.courses[str(action)]
+        course = self.dataset.courses[action]
         learner = self.obs_to_learner()
 
         required_matching = matchings.learner_course_required_matching(learner, course)
@@ -100,15 +94,12 @@ class CourseRecEnv(gym.Env):
             info = self._get_info()
             return observation, reward, terminated, False, info
 
-        for skill, level in course["provided_skills"].items():
-            skill_id = int(self.dataset.skills[skill])
-            if level > self._agent_skills[skill_id]:
-                self._agent_skills[skill_id] = level
+        for skill, level in course[1]:
+            self._agent_skills[skill] = max(self._agent_skills[skill], level)
 
         observation = self._get_obs()
         info = self._get_info()
-        reward = info["nb_applicable_jobs"] - self.current_attractiveness
-        self.current_attractiveness = info["nb_applicable_jobs"]
+        reward = info["nb_applicable_jobs"]
         self.nb_recommendations += 1
         terminated = self.nb_recommendations == self.k
 
@@ -121,17 +112,19 @@ class EvaluateCallback(BaseCallback):
         self.eval_env = eval_env
         self.eval_freq = eval_freq
 
-    def _on_step(self) -> bool:
+    def _on_step(self):
         if self.n_calls % self.eval_freq == 0:
             avg_jobs = 0
-            for learner in self.eval_env.dataset.learners.values():
+            for learner in self.eval_env.dataset.learners:
                 self.eval_env.reset(learner=learner)
                 done = False
+                tmp_avg_jobs = self.eval_env._get_info()["nb_applicable_jobs"]
                 while not done:
                     obs = self.eval_env._get_obs()
-                    old_attractiveness = self.eval_env._get_info()["nb_applicable_jobs"]
                     action, _state = self.model.predict(obs, deterministic=True)
                     obs, reward, done, _, info = self.eval_env.step(action)
-                avg_jobs += info["nb_applicable_jobs"]
+                    if reward != -1:
+                        tmp_avg_jobs = reward
+                avg_jobs += tmp_avg_jobs
             print(self.n_calls, avg_jobs / len(self.eval_env.dataset.learners))
         return True  # Return True to continue training

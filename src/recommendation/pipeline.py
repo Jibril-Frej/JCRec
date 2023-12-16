@@ -1,40 +1,48 @@
 import argparse
 
-from SyntheticDataset import SyntheticDataset
+from Dataset import Dataset
 from Greedy import Greedy
 from Optimal import Optimal
+from Reinforce import Reinforce
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--dataset_path")
+    parser.add_argument("--config")
     parser.add_argument("--threshold", type=float, default=0.75)
     parser.add_argument("-k", type=int, default=1)
     parser.add_argument(
-        "--model", default="greedy", choices=["greedy", "optimal", "reinforcement"]
+        "--model", default="greedy", choices=["greedy", "optimal", "dqn", "a2c", "ppo"]
     )
+    parser.add_argument("--total_steps", type=int, default=1000)
+    parser.add_argument("--eval_freq", type=int, default=100)
 
     args = parser.parse_args()
 
-    dataset_path = args.dataset_path
-    threshold = args.threshold
-    model = args.model
-    k = args.k
+    config = args.config
 
-    dataset = SyntheticDataset(dataset_path)
+    dataset = Dataset(args.config)
+    print(dataset)
 
-    if model == "greedy":
-        greedy_recommender = Greedy(dataset, threshold)
-        greedy_recommender.greedy_recommendation(k)
+    if args.model == "greedy":
+        greedy_recommender = Greedy(dataset, args.threshold)
+        greedy_recommender.greedy_recommendation(args.k)
 
-    if model == "optimal":
-        optimal_recommender = Optimal(dataset, threshold)
-        optimal_recommender.optimal_recommendation(k)
+    elif args.model == "optimal":
+        optimal_recommender = Optimal(dataset, args.threshold)
+        optimal_recommender.optimal_recommendation(args.k)
 
-    if model == "reinforce":
-        reinforce_recommender = Reinforce(dataset, threshold)
-        reinforce_recommender.reinforce_recommendation(k)
+    else:
+        reinforce_recommender = Reinforce(
+            dataset,
+            args.model,
+            args.k,
+            args.threshold,
+            args.total_steps,
+            args.eval_freq,
+        )
+        reinforce_recommender.reinforce_recommendation()
 
 
 if __name__ == "__main__":
