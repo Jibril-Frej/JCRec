@@ -5,7 +5,7 @@ job_path: data/V2/en_job_gpt-3.5-turbo_2sent_n0_mixed_narrow_detailed_cleaned.js
 mastery_levels_path: data/V2/mastery_levels.json
 results_path: data/V2/results
 level_3: true
-nb_courses: -1
-nb_cvs: -1
-nb_jobs: -1
+nb_courses: 10
+nb_cvs: 10
+nb_jobs: 10
 seed: 42
