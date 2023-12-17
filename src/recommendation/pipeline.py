@@ -1,4 +1,7 @@
+import os
 import argparse
+
+import yaml
 
 from Dataset import Dataset
 from Greedy import Greedy
@@ -48,8 +51,6 @@ def main():
     )
 
     args = parser.parse_args()
-
-    print(args)
 
     model_classes = {
         "greedy": Greedy,

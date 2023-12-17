@@ -1,8 +1,8 @@
 import os
 import json
 
+from time import time
 from copy import deepcopy
-from tqdm import tqdm
 from stable_baselines3 import DQN, A2C, PPO
 
 from Dataset import Dataset
@@ -80,8 +80,9 @@ class Reinforce:
 
         self.model.learn(total_timesteps=self.total_steps, callback=self.eval_callback)
 
+        time_start = time()
         recommendations = dict()
-        for i, learner in enumerate(tqdm(self.dataset.learners)):
+        for i, learner in enumerate(self.dataset.learners):
             self.eval_env.reset(learner=learner)
             done = False
             index = self.dataset.learners_index[i]
@@ -99,6 +100,9 @@ class Reinforce:
                 self.dataset.courses_index[course_id]
                 for course_id in recommendation_sequence
             ]
+
+        time_end = time()
+        print(f"Recommendation time: {time_end - time_start:.2f} seconds")
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
 

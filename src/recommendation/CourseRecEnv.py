@@ -1,6 +1,7 @@
 import os
 import random
 
+import time as time
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
@@ -117,6 +118,7 @@ class EvaluateCallback(BaseCallback):
 
     def _on_step(self):
         if self.n_calls % self.eval_freq == 0:
+            time_start = time.time()
             avg_jobs = 0
             for learner in self.eval_env.dataset.learners:
                 self.eval_env.reset(learner=learner)
@@ -129,7 +131,12 @@ class EvaluateCallback(BaseCallback):
                     if reward != -1:
                         tmp_avg_jobs = reward
                 avg_jobs += tmp_avg_jobs
-            print(self.n_calls, avg_jobs / len(self.eval_env.dataset.learners))
+            time_end = time.time()
+            print(
+                self.n_calls,
+                avg_jobs / len(self.eval_env.dataset.learners),
+                time_end - time_start,
+            )
             with open(
                 os.path.join(
                     self.eval_env.dataset.config["results_path"],
@@ -141,6 +148,8 @@ class EvaluateCallback(BaseCallback):
                     str(self.n_calls)
                     + " "
                     + str(avg_jobs / len(self.eval_env.dataset.learners))
+                    + " "
+                    + str(time_end - time_start)
                     + "\n"
                 )
             if self.mode == "w":

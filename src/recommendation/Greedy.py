@@ -2,7 +2,7 @@ import os
 import json
 
 from copy import deepcopy
-from tqdm import tqdm
+from time import time
 
 from Dataset import Dataset
 
@@ -84,9 +84,10 @@ class Greedy:
 
         results["original_applicable_jobs"] = avg_app_j
 
+        time_start = time()
         recommendations = dict()
 
-        for i, learner in enumerate(tqdm(self.dataset.learners)):
+        for i, learner in enumerate(self.dataset.learners):
             index = self.dataset.learners_index[i]
             recommendation_sequence = []
             for _ in range(k):
@@ -97,6 +98,9 @@ class Greedy:
                 self.dataset.courses_index[course_id]
                 for course_id in recommendation_sequence
             ]
+
+        time_end = time()
+        print(f"Recommendation time: {time_end - time_start:.2f} seconds")
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")

@@ -4,6 +4,15 @@ FROM python:3.10
 # Set the working directory in docker
 WORKDIR /app
 
+# Create a directory for the results volume
+RUN mkdir results && chmod 777 results
+RUN mkdir matplotlib_cache && chmod 777 matplotlib_cache
+RUN mkdir fontconfig && chmod 777 fontconfig
+
+# Set environment variables for cache directories
+ENV MPLCONFIGDIR=/app/matplotlib_cache
+ENV FONTCONFIG_PATH=/app/fontconfig
+
 # Create a directory for the data volume
 COPY requirements.txt .
 
