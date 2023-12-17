@@ -116,7 +116,7 @@ class Greedy:
 
         filename = (
             "greedy_nbskills_"
-            + str(self.dataset.nb_skills)
+            + str(len(self.dataset.skills))
             + "_k_"
             + str(k)
             + "_run_"

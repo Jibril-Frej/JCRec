@@ -27,7 +27,7 @@ class Reinforce:
             "all_"
             + self.model_name
             + "_nbskills_"
-            + str(self.dataset.nb_skills)
+            + str(len(self.dataset.skills))
             + "_k_"
             + str(self.k)
             + "_run_"
@@ -38,7 +38,7 @@ class Reinforce:
             "final_"
             + self.model_name
             + "_nbskills_"
-            + str(self.dataset.nb_skills)
+            + str(len(self.dataset.skills))
             + "_k_"
             + str(self.k)
             + "_run_"
