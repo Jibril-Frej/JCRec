@@ -156,7 +156,15 @@ class Optimal:
 
         results["recommendations"] = recommendations
 
-        filename = "optimal_k_" + str(k) + "_run_" + str(run) + ".json"
+        filename = (
+            "optimal_nbskills_"
+            + str(self.dataset.nb_skills)
+            + "_k_"
+            + str(k)
+            + "_run_"
+            + str(run)
+            + ".json"
+        )
 
         json.dump(
             results,
