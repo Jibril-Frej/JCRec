@@ -100,7 +100,11 @@ class Greedy:
             ]
 
         time_end = time()
-        print(f"Recommendation time: {time_end - time_start:.2f} seconds")
+        avg_recommendation_time = (time_end - time_start) / len(self.dataset.learners)
+
+        print(f"Average Recommendation Time: {avg_recommendation_time:.2f} seconds")
+
+        results["avg_recommendation_time"] = avg_recommendation_time
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
         print(f"The new average attractiveness of the learners is {avg_l_attrac:.2f}")

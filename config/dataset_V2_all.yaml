@@ -6,6 +6,7 @@ mastery_levels_path: data/V2/mastery_levels.json
 results_path: data/V2/results
 level_3: false
 nb_courses: 500
-nb_cvs: 50
+nb_cvs: -1
+max_cv_skills: 30
 nb_jobs: 500
 seed: 42

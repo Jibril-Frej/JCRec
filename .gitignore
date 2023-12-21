@@ -181,3 +181,5 @@ data/V2/
 docker_results/
 runai-job.yaml
 config/dataset_V2_runai.yaml
+data/res/
+data/res_short/

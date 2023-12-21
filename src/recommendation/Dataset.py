@@ -19,6 +19,7 @@ class Dataset:
         self.years = None
         self.learners_index = None
         self.learners = None
+        self.max_learner_skills = None
         self.jobs_index = None
         self.jobs = None
         self.jobs_inverted_index = None
@@ -76,6 +77,7 @@ class Dataset:
 
     def load_learners(self, replace_unk=1):
         learners = json.load(open(self.config["cv_path"]))
+        self.max_learner_skills = self.config["max_cv_skills"]
         self.learners_index = dict()
         index = 0
         self.learners = dict()
@@ -99,6 +101,12 @@ class Dataset:
                 self.learners[learner_id][skill] = round(
                     sum(level_list) / len(level_list)
                 )
+
+        self.learners = {
+            key: value
+            for key, value in self.learners.items()
+            if len(value) <= self.max_learner_skills
+        }
 
     def load_jobs(self, replace_unk=3):
         jobs = json.load(open(self.config["job_path"]))
