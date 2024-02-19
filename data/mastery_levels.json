@@ -1,0 +1,6 @@
+{
+    "beginner": 1,
+    "intermediate": 2,
+    "expert": 3,
+    "unknown": -1
+}

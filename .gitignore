@@ -162,12 +162,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Private data
-data/raw/evrlearn/
-data/processed/evrlearn/
-credentials.json
-api_key*
-
 # Other
 trash*
 diag_*
@@ -175,11 +169,5 @@ check_*
 ~$*
 *_ss*
 ids.txt
-data/synthetic/
-data/V1/
-data/V2/
-docker_results/
-runai-job.yaml
-config/dataset_V2_runai.yaml
-data/res/
-data/res_short/
+results/
+playground.ipynb
