@@ -1,6 +1,6 @@
 # Job-market Oriented Course Recommendation System
 
-Repository of experiments for a job market oriented course recommender system0
+Repository of experiments for a job market oriented course recommender system.
 
 ## Installation
 
