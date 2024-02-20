@@ -1,6 +1,6 @@
 # Job-market Oriented Course Recommendation System
 
-Repository of experiments for a job market oriented course recommender system.
+Repository of experiments for a job market oriented course recommender system. Ongoing project, more work is required.
 
 ## Installation
 
@@ -40,3 +40,22 @@ eval_freq: 5000 # Frequency of the evaluation of the agent
 nb_runs: 1 # Number of runs (set to 1 for greedy and optimal since they are deterministic)
 seed: 42 # Seed for the random number generator
 ```
+
+## Renforcement learning framework for Job-Market Oriented Course Recommender
+
+### Skill-based Modeling
+
+- User $u$: vector of skills where each dimension corresponds to a skill and the value is the user's proficiency level.
+- Job $j$: vector of skills where each dimension corresponds to a skill and the value is the job's required proficiency level.
+- Course $c = (c_r, c_p)$: two vectors of skills where each dimension corresponds to a skill and the value is the course's required (resp. provided) proficiency level.
+
+### MDP
+
+- State user $u$
+- Action space $\mathcal{C}$: the set of courses. One action being to recommend a course.
+- Reward $r$: number of jobs the learner can apply to.
+- Transition probabilities: binary, for now our MDP is deterministic. For a given action $c$ and state $u$, the outcome will always be the same: we update the state $u$ with the skills provided by the course: $c_p$.
+
+### Relavance and similarity functions
+
+TBD
