@@ -13,6 +13,13 @@ class Optimal:
         self.threshold = threshold
 
     def update_learner_profile(self, learner, course):
+        """Update the learner profile with the skills and levels provided by the course
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            course (list): list of required (resp. provided) skills and mastery level of the course
+        """
+        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
         for cskill, clevel in course[1]:
             found = False
             i = 0
@@ -26,6 +33,12 @@ class Optimal:
                 learner.append((cskill, clevel))
 
     def update_learner_profile_list(self, learner, course_list):
+        """Update the learner profile with the skills and levels provided by all courses in the course list
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            course_list (list): list of courses
+        """
         for id_c in course_list:
             self.update_learner_profile(learner, self.dataset.courses[id_c])
 
@@ -39,7 +52,22 @@ class Optimal:
         max_attractiveness,
         k,
     ):
+        """Recursively get the optimal sequence of courses for a learner
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            enrollable_courses (dict): dictionary of courses that the learner can enroll in
+            candiate_course_recommendation_list (list): list of candiate courses for the recommendation
+            course_recommendations_list (list): optimal sequence of courses for the recommendation to be returned
+            max_nb_applicable_jobs (int): current maximum number of applicable jobs given the recommendation list
+            max_attractiveness (int): current maximum attractiveness given the recommendation list
+            k (int): number of courses to recommend
+
+        Returns:
+            tuple: optimal sequence of courses for the recommendation, current maximum number of applicable jobs, current maximum attractiveness
+        """
         if k == 0:
+            # Base case: return the current recommendation list if the number of applicable jobs is greater than the current maximum
             nb_applicable_jobs = self.dataset.get_nb_applicable_jobs(
                 learner, self.threshold
             )
@@ -64,7 +92,7 @@ class Optimal:
                 max_nb_applicable_jobs,
                 max_attractiveness,
             )
-
+        # Recursive case: for all courses that the learner can enroll in, get the optimal sequence of courses by calling the function recursively
         else:
             enrollable_courses = self.dataset.get_all_enrollable_courses(
                 learner, self.threshold
@@ -94,6 +122,15 @@ class Optimal:
             )
 
     def recommend_and_update(self, learner, k):
+        """Recommend a sequence of courses to the learner and update the learner profile
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            k (int): number of courses to recommend
+
+        Returns:
+            list: optimal sequence of courses for the recommendation
+        """
         enrollable_courses = None
         candiate_course_recommendation_list = []
         course_recommendations_list = None
@@ -117,6 +154,12 @@ class Optimal:
         return course_recommendations_list
 
     def optimal_recommendation(self, k, run):
+        """Recommend a sequence of courses to all learners and save the results
+
+        Args:
+            k (int): number of courses to recommend
+            run (int): run number
+        """
         results = dict()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()

@@ -20,6 +20,7 @@ class Reinforce:
         self.run = run
         self.total_steps = total_steps
         self.eval_freq = eval_freq
+        # Create the training and evaluation environments
         self.train_env = CourseRecEnv(dataset, threshold=self.threshold, k=self.k)
         self.eval_env = CourseRecEnv(dataset, threshold=self.threshold, k=self.k)
         self.get_model()
@@ -53,6 +54,7 @@ class Reinforce:
         )
 
     def get_model(self):
+        """Sets the model to be used for the recommendation. The model is from stable-baselines3 and is chosen based on the model_name attribute."""
         if self.model_name == "dqn":
             self.model = DQN(env=self.train_env, verbose=0, policy="MlpPolicy")
         elif self.model_name == "a2c":
@@ -63,6 +65,13 @@ class Reinforce:
             self.model = PPO(env=self.train_env, verbose=0, policy="MlpPolicy")
 
     def update_learner_profile(self, learner, course):
+        """Updates the learner's profile with the skills and levels of the course.
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            course (list): list of required (resp. provided) skills and mastery level of the course
+        """
+        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
         for cskill, clevel in course[1]:
             found = False
             i = 0
@@ -76,6 +85,7 @@ class Reinforce:
                 learner.append((cskill, clevel))
 
     def reinforce_recommendation(self):
+        """Train and evaluates the reinforcement learning model to make recommendations for every learner in the dataset. The results are saved in a json file."""
         results = dict()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
@@ -88,8 +98,10 @@ class Reinforce:
 
         results["original_applicable_jobs"] = avg_app_j
 
+        # Train the model
         self.model.learn(total_timesteps=self.total_steps, callback=self.eval_callback)
 
+        # Evaluate the model
         time_start = time()
         recommendations = dict()
         for i, learner in enumerate(self.dataset.learners):

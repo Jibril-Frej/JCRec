@@ -13,6 +13,13 @@ class Greedy:
         self.threshold = threshold
 
     def update_learner_profile(self, learner, course):
+        """Update the learner profile with the skills and levels provided by the course
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            course (list): list of required (resp. provided) skills and mastery level of the course
+        """
+        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
         for cskill, clevel in course[1]:
             found = False
             i = 0
@@ -26,6 +33,15 @@ class Greedy:
                 learner.append((cskill, clevel))
 
     def get_course_recommendation(self, learner, enrollable_courses):
+        """Return the greedy recommendation for the learner
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+            enrollable_courses (dict): dictionary of courses that the learner can enroll in
+
+        Returns:
+            int: the id of the course recommended
+        """
         course_recommendation = None
         max_nb_applicable_jobs = 0
         max_attractiveness = 0
@@ -57,6 +73,14 @@ class Greedy:
         return course_recommendation
 
     def recommend_and_update(self, learner):
+        """Recommend a course to the learner and update the learner profile
+
+        Args:
+            learner (list): list of skills and mastery level of the learner
+
+        Returns:
+            int: the id of the course recommended
+        """
         enrollable_courses = self.dataset.get_all_enrollable_courses(
             learner, self.threshold
         )
@@ -72,6 +96,12 @@ class Greedy:
         return course_recommendation
 
     def greedy_recommendation(self, k, run):
+        """Make k greedy recommendations for each learner and save the results in a json file
+
+        Args:
+            k (int): number of recommendations to make for each learner
+            run (int): run number
+        """
         results = dict()
 
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
