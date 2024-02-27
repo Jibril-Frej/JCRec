@@ -30,17 +30,19 @@ def main():
     model_classes = {
         "greedy": Greedy,
         "optimal": Optimal,
-        "reinforce": Reinforce,  # assuming other models also use the Reinforce class
+        "reinforce": Reinforce,
     }
 
     for run in range(config["nb_runs"]):
         dataset = create_and_print_dataset(config)
+        # If the model is greedy or optimal, we use the corresponding class defined in Greedy.py and Optimal.py
         if config["model"] in ["greedy", "optimal"]:
             recommender = model_classes[config["model"]](dataset, config["threshold"])
             recommendation_method = getattr(
                 recommender, f'{config["model"]}_recommendation'
             )
             recommendation_method(config["k"], run)
+        # Otherwise, we use the Reinforce class, described in Reinforce.py
         else:
             recommender = Reinforce(
                 dataset,

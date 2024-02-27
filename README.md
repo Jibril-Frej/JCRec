@@ -59,3 +59,13 @@ seed: 42 # Seed for the random number generator
 ### Relavance and similarity functions
 
 TBD
+
+## Description of src files
+
+- [pipeline.py](src/pipeline.py): Trains and evaluate the agents, or heurisitc apporoaches.
+- [Greedy.py](src/Greedy.py): Classe that implements the greedy recommendation strategy.
+- [Optimal.py](src/Optimal.py): Classe that implements the optimal recommendation.
+- [Reinforce.py](src/Reinforce.py): Classe that implements the training and evaluation of the Reinfrocement-based recommendation using agents from [stable_baselines3](https://stable-baselines3.readthedocs.io/en/master/).
+- [CourseRecEnv.py](src/CourseRecEnv.py): Classe that implements the evironment for training the agents using the [gymnasium](https://gymnasium.farama.org/index.html) library.
+- [Dataset.py](src/Dataset.py): Class that implments the dataset using resumes, courses and jobs.
+- [matchings.py](src/matchings.py): Contains various matching, similarity, and relevance functions.
