@@ -13,6 +13,6 @@ threshold: 0.8
 k: 2
 model: dqn
 total_steps: 5000
-eval_freq: 1000
+eval_freq: 6000
 nb_runs: 1
 seed: 42
