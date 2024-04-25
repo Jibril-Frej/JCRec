@@ -20,7 +20,9 @@ def main():
     """Run the recommender system based on the provided model and parameters."""
     parser = argparse.ArgumentParser(description="Run recommender models.")
 
-    parser.add_argument("--config", help="Path to the configuration file")
+    parser.add_argument(
+        "--config", help="Path to the configuration file", default="config/run.yaml"
+    )
 
     args = parser.parse_args()
 
