@@ -1,10 +1,9 @@
 import os
 import json
 
-from copy import deepcopy
-from time import time
+from time import process_time
 
-# from Dataset import Dataset
+import numpy as np
 
 
 class Greedy:
@@ -19,18 +18,8 @@ class Greedy:
             learner (list): list of skills and mastery level of the learner
             course (list): list of required (resp. provided) skills and mastery level of the course
         """
-        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
-        for cskill, clevel in course[1]:
-            found = False
-            i = 0
-            while not found and i < len(learner):
-                lskill, llevel = learner[i]
-                if cskill == lskill:
-                    learner[i] = (lskill, max(llevel, clevel))
-                    found = True
-                i += 1
-            if not found:
-                learner.append((cskill, clevel))
+        learner = np.maximum(learner, course[1])
+        return learner
 
     def get_course_recommendation(self, learner, enrollable_courses):
         """Return the greedy recommendation for the learner
@@ -47,8 +36,8 @@ class Greedy:
         max_attractiveness = 0
 
         for id_c, course in enrollable_courses.items():
-            tmp_learner = deepcopy(learner)
-            self.update_learner_profile(tmp_learner, course)
+            tmp_learner = learner
+            tmp_learner = self.update_learner_profile(tmp_learner, course)
 
             nb_applicable_jobs = self.dataset.get_nb_applicable_jobs(
                 tmp_learner, self.threshold
@@ -72,15 +61,16 @@ class Greedy:
 
         return course_recommendation
 
-    def recommend_and_update(self, learner):
-        """Recommend a course to the learner and update the learner profile
+    def recommend_and_update(self, learner_id):
+        """Recommend a course to the learner i and update the learner profile
 
         Args:
-            learner (list): list of skills and mastery level of the learner
+            learner_id (int): index of the learner
 
         Returns:
             int: the id of the course recommended
         """
+        learner = self.dataset.learners[learner_id]
         enrollable_courses = self.dataset.get_all_enrollable_courses(
             learner, self.threshold
         )
@@ -90,7 +80,7 @@ class Greedy:
             learner, enrollable_courses
         )
 
-        self.update_learner_profile(
+        self.dataset.learners[learner_id] = self.update_learner_profile(
             learner, self.dataset.courses[course_recommendation]
         )
         return course_recommendation
@@ -114,25 +104,23 @@ class Greedy:
 
         results["original_applicable_jobs"] = avg_app_j
 
-        time_start = time()
+        time_start = process_time()
         recommendations = dict()
 
         for i, learner in enumerate(self.dataset.learners):
             index = self.dataset.learners_index[i]
             recommendation_sequence = []
             for _ in range(k):
-                recommendation_sequence.append(
-                    self.recommend_and_update(self.dataset.learners[i])
-                )
+                recommendation_sequence.append(self.recommend_and_update(i))
             recommendations[index] = [
                 self.dataset.courses_index[course_id]
                 for course_id in recommendation_sequence
             ]
 
-        time_end = time()
+        time_end = process_time()
         avg_recommendation_time = (time_end - time_start) / len(self.dataset.learners)
 
-        print(f"Average Recommendation Time: {avg_recommendation_time:.2f} seconds")
+        print(f"Average Recommendation Time: {avg_recommendation_time:.4f} seconds")
 
         results["avg_recommendation_time"] = avg_recommendation_time
 

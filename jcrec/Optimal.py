@@ -1,10 +1,9 @@
 import os
 import json
 
-from copy import deepcopy
 from time import time
 
-# from Dataset import Dataset
+import numpy as np
 
 
 class Optimal:
@@ -19,28 +18,21 @@ class Optimal:
             learner (list): list of skills and mastery level of the learner
             course (list): list of required (resp. provided) skills and mastery level of the course
         """
-        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
-        for cskill, clevel in course[1]:
-            found = False
-            i = 0
-            while not found and i < len(learner):
-                lskill, llevel = learner[i]
-                if cskill == lskill:
-                    learner[i] = (lskill, max(llevel, clevel))
-                    found = True
-                i += 1
-            if not found:
-                learner.append((cskill, clevel))
+        learner = np.maximum(learner, course[1])
+        return learner
 
-    def update_learner_profile_list(self, learner, course_list):
+    def update_learner_profile_list(self, learner_id, course_list):
         """Update the learner profile with the skills and levels provided by all courses in the course list
 
         Args:
-            learner (list): list of skills and mastery level of the learner
+            learner_id (int): id of the learner
             course_list (list): list of courses
         """
+        learner = self.dataset.learners[learner_id]
         for id_c in course_list:
-            self.update_learner_profile(learner, self.dataset.courses[id_c])
+            self.dataset.learners[learner_id] = self.update_learner_profile(
+                learner, self.dataset.courses[id_c]
+            )
 
     def get_course_recommendation(
         self,
@@ -98,8 +90,8 @@ class Optimal:
                 learner, self.threshold
             )
             for id_c, course in enrollable_courses.items():
-                tmp_learner = deepcopy(learner)
-                self.update_learner_profile(tmp_learner, course)
+                tmp_learner = learner
+                tmp_learner = self.update_learner_profile(tmp_learner, course)
                 new_candidate_list = candiate_course_recommendation_list + [id_c]
                 (
                     course_recommendations_list,
@@ -121,11 +113,11 @@ class Optimal:
                 max_attractiveness,
             )
 
-    def recommend_and_update(self, learner, k):
+    def recommend_and_update(self, learner_id, k):
         """Recommend a sequence of courses to the learner and update the learner profile
 
         Args:
-            learner (list): list of skills and mastery level of the learner
+            learner_id (int): id of the learner
             k (int): number of courses to recommend
 
         Returns:
@@ -136,6 +128,7 @@ class Optimal:
         course_recommendations_list = None
         max_nb_applicable_jobs = 0
         max_attractiveness = 0
+        learner = self.dataset.learners[learner_id]
 
         (
             course_recommendations_list,
@@ -150,7 +143,7 @@ class Optimal:
             max_attractiveness,
             k,
         )
-        self.update_learner_profile_list(learner, course_recommendations_list)
+        self.update_learner_profile_list(learner_id, course_recommendations_list)
         return course_recommendations_list
 
     def optimal_recommendation(self, k, run):
@@ -176,9 +169,7 @@ class Optimal:
         recommendations = dict()
         for i, learner in enumerate(self.dataset.learners):
             index = self.dataset.learners_index[i]
-            recommendation_sequence = self.recommend_and_update(
-                self.dataset.learners[i], k
-            )
+            recommendation_sequence = self.recommend_and_update(i, k)
 
             recommendations[index] = [
                 self.dataset.courses_index[course_id]
@@ -188,7 +179,7 @@ class Optimal:
         time_end = time()
         avg_recommendation_time = (time_end - time_start) / len(self.dataset.learners)
 
-        print(f"Average Recommendation Time: {avg_recommendation_time:.2f} seconds")
+        print(f"Average Recommendation Time: {avg_recommendation_time:.4f} seconds")
 
         results["avg_recommendation_time"] = avg_recommendation_time
 

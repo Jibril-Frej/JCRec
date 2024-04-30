@@ -1,7 +1,7 @@
 import os
 import random
 
-import time as time
+from time import process_time
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
@@ -20,8 +20,9 @@ class CourseRecEnv(gym.Env):
         ]
         self.max_level = max(self.mastery_levels)
         self.nb_courses = len(dataset.courses)
-        self.min_skills = min([len(learner) for learner in dataset.learners])
-        self.max_skills = max([len(learner) for learner in dataset.learners])
+        # get the minimum and maximum number of skills of the learners using np.nonzero
+        self.min_skills = min(np.count_nonzero(self.dataset.learners, axis=1))
+        self.max_skills = max(np.count_nonzero(self.dataset.learners, axis=1))
         self.threshold = threshold
         self.k = k
         # The observation space is a vector of length nb_skills that represents the learner's skills
@@ -45,39 +46,12 @@ class CourseRecEnv(gym.Env):
         Returns:
             dict: the current info of the environment, that is the number of applicable jobs
         """
-        learner = self.obs_to_learner()
 
         return {
             "nb_applicable_jobs": self.dataset.get_nb_applicable_jobs(
-                learner, threshold=self.threshold
+                self._agent_skills, threshold=self.threshold
             )
         }
-
-    def obs_to_learner(self):
-        """Converts the observation from a numpy array to a list of skills and levels.
-
-        Returns:
-            list: the list of skills and levels of the learner
-        """
-        learner = []
-        for skill, level in enumerate(self._agent_skills):
-            if level > 0:
-                learner.append((skill, level))
-        return learner
-
-    def learner_to_obs(self, learner):
-        """Converts the list of skills and levels to a numpy array.
-
-        Args:
-            learner (list): list of skills and levels of the learner
-
-        Returns:
-            np.array: the observation of the environment, that is the learner's skills
-        """
-        obs = np.zeros(self.nb_skills, dtype=np.int32)
-        for skill, level in learner:
-            obs[skill] = level
-        return obs
 
     def get_random_learner(self):
         """Creates a random learner with a random number of skills and levels. This method is used to initialize the environment.
@@ -85,17 +59,19 @@ class CourseRecEnv(gym.Env):
         Returns:
             np.array: the initial observation of the environment, that is the learner's initial skills
         """
-        # Choose the number of skills the agent has randomly
+        # Randomly choose the number of skills the agent has randomly
         n_skills = random.randint(self.min_skills, self.max_skills)
+
+        # Initialize the skills array with zeros
         initial_skills = np.zeros(self.nb_skills, dtype=np.int32)
-        skills = np.random.choice(self.nb_skills, size=n_skills, replace=False)
-        levels = np.random.choice(
-            self.mastery_levels,
-            n_skills,
-            replace=True,
+
+        # Choose unique skill indices without replacement
+        skill_indices = np.random.choice(self.nb_skills, size=n_skills, replace=False)
+
+        # Assign random mastery levels to these skills, levels can repeat
+        initial_skills[skill_indices] = np.random.choice(
+            self.mastery_levels, size=n_skills, replace=True
         )
-        for skill, level in zip(skills, levels):
-            initial_skills[skill] = level
         return initial_skills
 
     def reset(self, seed=None, learner=None):
@@ -112,7 +88,7 @@ class CourseRecEnv(gym.Env):
         super().reset(seed=seed)
 
         if learner is not None:
-            self._agent_skills = self.learner_to_obs(learner)
+            self._agent_skills = learner
         else:
             self._agent_skills = self.get_random_learner()
         self.nb_recommendations = 0
@@ -132,7 +108,7 @@ class CourseRecEnv(gym.Env):
         # Update the agent's skills with the course provided_skills
 
         course = self.dataset.courses[action]
-        learner = self.obs_to_learner()
+        learner = self._agent_skills
 
         required_matching = matchings.learner_course_required_matching(learner, course)
         provided_matching = matchings.learner_course_provided_matching(learner, course)
@@ -143,8 +119,7 @@ class CourseRecEnv(gym.Env):
             info = self._get_info()
             return observation, reward, terminated, False, info
 
-        for skill, level in course[1]:
-            self._agent_skills[skill] = max(self._agent_skills[skill], level)
+        self._agent_skills = np.maximum(self._agent_skills, course[1])
 
         observation = self._get_obs()
         info = self._get_info()
@@ -171,7 +146,7 @@ class EvaluateCallback(BaseCallback):
             bool: Always returns True to continue training
         """
         if self.n_calls % self.eval_freq == 0:
-            time_start = time.time()
+            time_start = process_time()
             avg_jobs = 0
             for learner in self.eval_env.dataset.learners:
                 self.eval_env.reset(learner=learner)
@@ -184,7 +159,7 @@ class EvaluateCallback(BaseCallback):
                     if reward != -1:
                         tmp_avg_jobs = reward
                 avg_jobs += tmp_avg_jobs
-            time_end = time.time()
+            time_end = process_time()
             print(
                 f"Iteration {self.n_calls}. Average jobs: {avg_jobs / len(self.eval_env.dataset.learners)} Time: {time_end - time_start}"
             )

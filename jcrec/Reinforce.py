@@ -1,11 +1,10 @@
 import os
 import json
 
-from time import time
-from copy import deepcopy
+import numpy as np
+from time import process_time
 from stable_baselines3 import DQN, A2C, PPO
 
-from Dataset import Dataset
 from CourseRecEnv import CourseRecEnv, EvaluateCallback
 
 
@@ -71,18 +70,8 @@ class Reinforce:
             learner (list): list of skills and mastery level of the learner
             course (list): list of required (resp. provided) skills and mastery level of the course
         """
-        # Update the learner profile with the skills and levels provided by the course (course [1] is the list of skills and levels provided by the course)
-        for cskill, clevel in course[1]:
-            found = False
-            i = 0
-            while not found and i < len(learner):
-                lskill, llevel = learner[i]
-                if cskill == lskill:
-                    learner[i] = (lskill, max(llevel, clevel))
-                    found = True
-                i += 1
-            if not found:
-                learner.append((cskill, clevel))
+        learner = np.maximum(learner, course[1])
+        return learner
 
     def reinforce_recommendation(self):
         """Train and evaluates the reinforcement learning model to make recommendations for every learner in the dataset. The results are saved in a json file."""
@@ -102,7 +91,7 @@ class Reinforce:
         self.model.learn(total_timesteps=self.total_steps, callback=self.eval_callback)
 
         # Evaluate the model
-        time_start = time()
+        time_start = process_time()
         recommendations = dict()
         for i, learner in enumerate(self.dataset.learners):
             self.eval_env.reset(learner=learner)
@@ -116,17 +105,19 @@ class Reinforce:
                 if reward != -1:
                     recommendation_sequence.append(action.item())
             for course in recommendation_sequence:
-                self.update_learner_profile(learner, self.dataset.courses[course])
+                self.dataset.learners[i] = self.update_learner_profile(
+                    learner, self.dataset.courses[course]
+                )
 
             recommendations[index] = [
                 self.dataset.courses_index[course_id]
                 for course_id in recommendation_sequence
             ]
 
-        time_end = time()
+        time_end = process_time()
         avg_recommendation_time = (time_end - time_start) / len(self.dataset.learners)
 
-        print(f"Average Recommendation Time: {avg_recommendation_time:.2f} seconds")
+        print(f"Average Recommendation Time: {avg_recommendation_time:.4f} seconds")
 
         results["avg_recommendation_time"] = avg_recommendation_time
         avg_l_attrac = self.dataset.get_avg_learner_attractiveness()
